@@ -1,49 +1,87 @@
+import json
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Self
 
 
+@dataclass(frozen=True)
 class Exercise:
-    """Represents an exercise with associated metadata and image resources.
+    """Represents a physical exercise with its metadata and images.
 
-    This class manages the relationship between a JSON metadata file and an
-    optional directory containing exercise execution images.
+    All string fields are automatically converted to title case on
+    initialization. Optional fields (force, mechanic, equipment) may
+    be None if not applicable to the exercise.
+
+    Attributes:
+        source_id: Unique identifier from the source dataset.
+        name: Display name of the exercise.
+        force: Type of force involved (e.g. Push, Pull).
+        level: Difficulty level (e.g. Beginner, Intermediate).
+        mechanic: Movement mechanic (e.g. Compound, Isolation).
+        equipment: Required equipment (e.g. Barbell, Dumbbell).
+        primary_muscles: Muscles primarily targeted by the exercise.
+        secondary_muscles: Muscles secondarily engaged.
+        instructions: Step-by-step instructions to perform the exercise.
+        category: Categories the exercise belongs to.
+        images: Raw image data associated with the exercise.
+        id: Database identifier, defaults to 0 when not yet persisted.
+
     """
 
-    def __init__(self, metadata_file: Path, image_folder: Path | None) -> None:
-        """Initialize an Exercise instance.
+    source_id: str
+    name: str
+    force: str
+    level: str
+    mechanic: str
+    equipment: str
+    primary_muscles: list[str]
+    secondary_muscles: list[str]
+    instructions: list[str]
+    category: list[str]
+    images: list[bytes]
+    id: int = 0
 
-        Args:
-            metadata_file: Path to the JSON file containing exercise data.
-            image_folder: Path to the directory containing exercise images.
-
-        Raises:
-            NotADirectoryError: If image_folder is provided but isn't a directory.
-            FileNotFoundError: If the metadata_file does not exist.
-
-        """
-        if not (image_folder is None or image_folder.is_dir()):
-            err = f"Path {image_folder} does not point to a valid directory"
-            raise NotADirectoryError(err)
-
-        if not metadata_file.is_file():
-            err = f"Metadata file not found: {metadata_file}"
-            raise FileNotFoundError(err)
-
-        self.__metadata_file = metadata_file
-        self.__image_folder = image_folder
-
-    def __str__(self) -> str:
-        """Return a string summary of the exercise paths."""
-        return f"Exercise: {self.__metadata_file} images at {self.__image_folder}"
-
-    def __repr__(self) -> str:
-        """Return a string that can recreate the instance."""
-        return (
-            f"Exercise(metadata_file={self.__metadata_file!r}, "
-            f"image_folder={self.__image_folder!r})"
+    def __post_init__(self) -> None:
+        """Process strings to transform all to title."""
+        object.__setattr__(
+            self,
+            "force",
+            self.force.title() if self.force else None,
+        )
+        object.__setattr__(self, "level", self.level.title())
+        object.__setattr__(
+            self,
+            "mechanic",
+            self.mechanic.title() if self.mechanic else None,
+        )
+        object.__setattr__(
+            self,
+            "equipment",
+            self.equipment.title() if self.equipment else None,
+        )
+        object.__setattr__(
+            self,
+            "primary_muscles",
+            [x.title() for x in self.primary_muscles],
+        )
+        object.__setattr__(
+            self,
+            "secondary_muscles",
+            [x.title() for x in self.secondary_muscles],
+        )
+        object.__setattr__(
+            self,
+            "instructions",
+            [x.title() for x in self.instructions],
+        )
+        object.__setattr__(
+            self,
+            "category",
+            [x.title() for x in self.category],
         )
 
-    @classmethod
-    def create(cls, exercise_folder: str | Path) -> list[Exercise]:
+    @staticmethod
+    def create_from_folder(exercise_folder: str | Path) -> list[Exercise]:
         """Find and creates all exercises from a directory.
 
         It looks for all .json files in the given folder and assumes the
@@ -57,8 +95,50 @@ class Exercise:
 
         """
         exercise_folder = Path(exercise_folder)
+        if not exercise_folder.is_dir():
+            raise NotADirectoryError(exercise_folder)
 
         return [
-            cls(metadata_file, metadata_file.parent / metadata_file.stem)
-            for metadata_file in exercise_folder.glob("*.json")
+            Exercise.create_from_metadata(exercise)
+            for exercise in exercise_folder.glob("*.json")
         ]
+
+    @classmethod
+    def create_from_metadata(cls, metadata_file_path: Path) -> Self:
+        """Create an instance from a metadata JSON file.
+
+        Reads the metadata file and loads the associated images relative
+        to the metadata file's directory.
+
+        Args:
+            metadata_file_path: Path to the JSON metadata file.
+
+        Returns:
+            A new instance populated with data from the metadata file.
+
+        Raises:
+            FileNotFoundError: If the metadata file or any referenced
+                image does not exist.
+            KeyError: If a required field is missing from the metadata.
+            json.JSONDecodeError: If the metadata file is not valid JSON.
+
+        """
+        with Path.open(metadata_file_path, "r") as metadata_file:
+            metadata = json.loads(metadata_file.read())
+
+        image_file_path: list[Path] = [
+            metadata_file_path.parent / image_path for image_path in metadata["images"]
+        ]
+        return cls(
+            source_id=metadata["id"],
+            name=metadata["name"],
+            force=metadata["force"],
+            level=metadata["level"],
+            mechanic=metadata["mechanic"],
+            equipment=metadata["equipment"],
+            primary_muscles=metadata["primaryMuscles"],
+            secondary_muscles=metadata["secondaryMuscles"],
+            instructions=metadata["instructions"],
+            category=metadata["category"],
+            images=[image_path.read_bytes() for image_path in image_file_path],
+        )
