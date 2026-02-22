@@ -137,7 +137,7 @@ func NewExercise(
 	}
 }
 
-func NewExerciseFromMetadata(path string) (Exercise, error) {
+func NewExerciseFromMetadata(path string, skipImages bool) (Exercise, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return Exercise{}, fmt.Errorf("read file %s: %w", path, err)
@@ -156,17 +156,19 @@ func NewExerciseFromMetadata(path string) (Exercise, error) {
 
 	baseDir := filepath.Dir(path)
 	images := make([]Image, 0, len(metadata.Images))
-	for _, imgPath := range metadata.Images {
-		absPath := filepath.Join(baseDir, imgPath)
-		imgData, err := os.ReadFile(absPath)
-		if err != nil {
-			return Exercise{}, fmt.Errorf("read image %s for %s: %w", absPath, path, err)
+	if !skipImages {
+		for _, imgPath := range metadata.Images {
+			absPath := filepath.Join(baseDir, imgPath)
+			imgData, err := os.ReadFile(absPath)
+			if err != nil {
+				return Exercise{}, fmt.Errorf("read image %s for %s: %w", absPath, path, err)
+			}
+			mimeType := http.DetectContentType(imgData)
+			images = append(images, Image{
+				ImageBlob: imgData,
+				MimeType:  mimeType,
+			})
 		}
-		mimeType := http.DetectContentType(imgData)
-		images = append(images, Image{
-			ImageBlob: imgData,
-			MimeType:  mimeType,
-		})
 	}
 
 	return NewExercise(
@@ -184,7 +186,7 @@ func NewExerciseFromMetadata(path string) (Exercise, error) {
 	), nil
 }
 
-func NewExerciseFromFolder(path string) ([]Exercise, error) {
+func NewExerciseFromFolder(path string, skipImages bool) ([]Exercise, error) {
 	var exercises []Exercise
 
 	info, err := os.Stat(path)
@@ -201,7 +203,7 @@ func NewExerciseFromFolder(path string) ([]Exercise, error) {
 	}
 
 	for _, filePath := range matches {
-		exercise, err := NewExerciseFromMetadata(filePath)
+		exercise, err := NewExerciseFromMetadata(filePath, skipImages)
 		if err != nil {
 			return nil, err
 		}

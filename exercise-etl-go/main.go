@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 )
 
+var skipImages bool
+
 func main() {
 	var override bool
 	var schemaPath string
@@ -16,6 +18,8 @@ func main() {
 	flag.BoolVar(&override, "o", false, "Override existing database file")
 	flag.StringVar(&schemaPath, "schema", "db/create.sql", "Path to SQL schema file")
 	flag.StringVar(&schemaPath, "s", "db/create.sql", "Path to SQL schema file")
+	flag.BoolVar(&skipImages, "no-images", false, "Skip loading and storing images")
+	flag.BoolVar(&skipImages, "n", false, "Skip loading and storing images (shorthand)")
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: %s [OPTIONS] <exercise-folder> <exercise-db>\n", filepath.Base(os.Args[0]))
@@ -24,6 +28,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, "\nOptions:")
 		fmt.Fprintln(os.Stderr, "  -o, --override    Override existing database file")
 		fmt.Fprintln(os.Stderr, "  -s, --schema      Path to SQL schema file (default: db/create.sql)")
+		fmt.Fprintln(os.Stderr, "  -n, --no-images   Skip loading and storing images (reduces database size)")
 	}
 
 	flag.Parse()
@@ -74,8 +79,11 @@ func main() {
 	}
 	defer storage.Close()
 
+	if skipImages {
+		fmt.Println("Skipping image loading (--no-images flag set)")
+	}
 	fmt.Printf("Loading exercises from: %s\n", folderPath)
-	exercises, err := NewExerciseFromFolder(folderPath)
+	exercises, err := NewExerciseFromFolder(folderPath, skipImages)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: failed to load exercises: %v\n", err)
 		os.Exit(1)
