@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 type jsonExercise struct {
@@ -25,6 +26,68 @@ type jsonExercise struct {
 type Image struct {
 	ImageBlob []byte
 	MimeType  string
+}
+
+func validateMetadata(metadata *jsonExercise) error {
+	metadata.SourceID = strings.TrimSpace(metadata.SourceID)
+	if metadata.SourceID == "" {
+		return fmt.Errorf("source id is empty")
+	}
+	metadata.Name = strings.TrimSpace(metadata.Name)
+	if metadata.Name == "" {
+		return fmt.Errorf("name is empty")
+	}
+	metadata.Level = strings.TrimSpace(metadata.Level)
+	if metadata.Level == "" {
+		return fmt.Errorf("level is empty")
+	}
+	if metadata.Force != nil {
+		*metadata.Force = strings.TrimSpace(*metadata.Force)
+		if *metadata.Force == "" {
+			return fmt.Errorf("force is empty string")
+		}
+	}
+	if metadata.Mechanic != nil {
+		*metadata.Mechanic = strings.TrimSpace(*metadata.Mechanic)
+		if *metadata.Mechanic == "" {
+			return fmt.Errorf("mechanic is empty string")
+		}
+	}
+	if metadata.Equipment != nil {
+		*metadata.Equipment = strings.TrimSpace(*metadata.Equipment)
+		if *metadata.Equipment == "" {
+			return fmt.Errorf("equipment is empty string")
+		}
+	}
+	metadata.Category = strings.TrimSpace(metadata.Category)
+	if metadata.Category == "" {
+		return fmt.Errorf("category is empty")
+	}
+	for i := range metadata.PrimaryMuscles {
+		metadata.PrimaryMuscles[i] = strings.TrimSpace(metadata.PrimaryMuscles[i])
+		if metadata.PrimaryMuscles[i] == "" {
+			return fmt.Errorf("primary muscles[%d] is empty", i)
+		}
+	}
+	for i := range metadata.SecondaryMuscles {
+		metadata.SecondaryMuscles[i] = strings.TrimSpace(metadata.SecondaryMuscles[i])
+		if metadata.SecondaryMuscles[i] == "" {
+			return fmt.Errorf("secondary muscles[%d] is empty", i)
+		}
+	}
+	for i := range metadata.Instructions {
+		metadata.Instructions[i] = strings.TrimSpace(metadata.Instructions[i])
+		if metadata.Instructions[i] == "" {
+			return fmt.Errorf("instructions[%d] is empty", i)
+		}
+	}
+	for i := range metadata.Images {
+		metadata.Images[i] = strings.TrimSpace(metadata.Images[i])
+		if metadata.Images[i] == "" {
+			return fmt.Errorf("images[%d] path is empty", i)
+		}
+	}
+	return nil
 }
 
 type Exercise struct {
@@ -78,6 +141,10 @@ func NewExerciseFromMetadata(path string) (Exercise, error) {
 
 	var metadata jsonExercise
 	if err := json.Unmarshal(data, &metadata); err != nil {
+		return Exercise{}, err
+	}
+
+	if err := validateMetadata(&metadata); err != nil {
 		return Exercise{}, err
 	}
 
