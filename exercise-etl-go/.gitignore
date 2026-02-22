@@ -70,3 +70,4 @@ core.*
 
 #User-Defined
 *.db
+exercise-etl
