@@ -42,6 +42,7 @@ CREATE TABLE exercise_images(
     exercise_id INTEGER NOT NULL REFERENCES exercises(id),
     image_order INTEGER NOT NULL,
     image_blob BLOB NOT NULL,
+    mime_type TEXT NOT NULL,
     UNIQUE(exercise_id, image_order)
 );
 
