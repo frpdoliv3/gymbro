@@ -42,13 +42,15 @@ CREATE TABLE exercise_images(
     exercise_id INTEGER NOT NULL REFERENCES exercises(id),
     image_order INTEGER NOT NULL,
     image_blob BLOB NOT NULL,
+    mime_type TEXT NOT NULL,
     UNIQUE(exercise_id, image_order)
 );
 
 CREATE TABLE exercise_muscles(
     exercise_id INTEGER NOT NULL REFERENCES exercises(id),
     muscle_id INTEGER NOT NULL REFERENCES muscles(id),
-    PRIMARY KEY(exercise_id, muscle_id)
+    muscle_type TEXT NOT NULL CHECK(muscle_type IN ('primary', 'secondary')),
+    PRIMARY KEY(exercise_id, muscle_id, muscle_type)
 );
 
 CREATE TABLE exercise_categories(
