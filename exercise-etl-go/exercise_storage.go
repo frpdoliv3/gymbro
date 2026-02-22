@@ -215,9 +215,9 @@ func (s *Storage) storeExerciseTx(ctx context.Context, tx *sql.Tx, exercise Exer
 			return 0, fmt.Errorf("insert primary muscle %s: %w", muscle, err)
 		}
 		_, err = tx.ExecContext(ctx, `
-			INSERT INTO exercise_muscles (exercise_id, muscle_id)
-			VALUES (?, ?)
-		`, id, muscleID)
+			INSERT INTO exercise_muscles (exercise_id, muscle_id, muscle_type)
+			VALUES (?, ?, ?)
+		`, id, muscleID, "primary")
 		if err != nil {
 			return 0, fmt.Errorf("link exercise to primary muscle: %w", err)
 		}
@@ -229,9 +229,9 @@ func (s *Storage) storeExerciseTx(ctx context.Context, tx *sql.Tx, exercise Exer
 			return 0, fmt.Errorf("insert secondary muscle %s: %w", muscle, err)
 		}
 		_, err = tx.ExecContext(ctx, `
-			INSERT INTO exercise_muscles (exercise_id, muscle_id)
-			VALUES (?, ?)
-		`, id, muscleID)
+			INSERT INTO exercise_muscles (exercise_id, muscle_id, muscle_type)
+			VALUES (?, ?, ?)
+		`, id, muscleID, "secondary")
 		if err != nil {
 			return 0, fmt.Errorf("link exercise to secondary muscle: %w", err)
 		}

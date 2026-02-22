@@ -28,66 +28,70 @@ type Image struct {
 	MimeType  string
 }
 
-func validateMetadata(metadata *jsonExercise) error {
-	metadata.SourceID = strings.TrimSpace(metadata.SourceID)
+func validateMetadata(metadata jsonExercise) (jsonExercise, error) {
+	metadata.SourceID = NormalizeString(metadata.SourceID)
 	if metadata.SourceID == "" {
-		return fmt.Errorf("source id is empty")
+		return metadata, fmt.Errorf("source id is empty")
 	}
-	metadata.Name = strings.TrimSpace(metadata.Name)
+	metadata.Name = NormalizeString(metadata.Name)
 	if metadata.Name == "" {
-		return fmt.Errorf("name is empty")
+		return metadata, fmt.Errorf("name is empty")
 	}
-	metadata.Level = strings.TrimSpace(metadata.Level)
+	metadata.Level = NormalizeString(metadata.Level)
 	if metadata.Level == "" {
-		return fmt.Errorf("level is empty")
+		return metadata, fmt.Errorf("level is empty")
 	}
 	if metadata.Force != nil {
-		*metadata.Force = strings.TrimSpace(*metadata.Force)
+		metadata.Force = NormalizeStringPtr(metadata.Force)
 		if *metadata.Force == "" {
-			return fmt.Errorf("force is empty string")
+			return metadata, fmt.Errorf("force is empty string")
 		}
 	}
 	if metadata.Mechanic != nil {
-		*metadata.Mechanic = strings.TrimSpace(*metadata.Mechanic)
+		metadata.Mechanic = NormalizeStringPtr(metadata.Mechanic)
 		if *metadata.Mechanic == "" {
-			return fmt.Errorf("mechanic is empty string")
+			return metadata, fmt.Errorf("mechanic is empty string")
 		}
 	}
 	if metadata.Equipment != nil {
-		*metadata.Equipment = strings.TrimSpace(*metadata.Equipment)
+		metadata.Equipment = NormalizeStringPtr(metadata.Equipment)
 		if *metadata.Equipment == "" {
-			return fmt.Errorf("equipment is empty string")
+			return metadata, fmt.Errorf("equipment is empty string")
 		}
 	}
-	metadata.Category = strings.TrimSpace(metadata.Category)
+	metadata.Category = NormalizeString(metadata.Category)
 	if metadata.Category == "" {
-		return fmt.Errorf("category is empty")
+		return metadata, fmt.Errorf("category is empty")
 	}
 	for i := range metadata.PrimaryMuscles {
-		metadata.PrimaryMuscles[i] = strings.TrimSpace(metadata.PrimaryMuscles[i])
+		metadata.PrimaryMuscles[i] = NormalizeString(metadata.PrimaryMuscles[i])
 		if metadata.PrimaryMuscles[i] == "" {
-			return fmt.Errorf("primary muscles[%d] is empty", i)
+			return metadata, fmt.Errorf("primary muscles[%d] is empty", i)
 		}
 	}
 	for i := range metadata.SecondaryMuscles {
-		metadata.SecondaryMuscles[i] = strings.TrimSpace(metadata.SecondaryMuscles[i])
+		metadata.SecondaryMuscles[i] = NormalizeString(metadata.SecondaryMuscles[i])
 		if metadata.SecondaryMuscles[i] == "" {
-			return fmt.Errorf("secondary muscles[%d] is empty", i)
+			return metadata, fmt.Errorf("secondary muscles[%d] is empty", i)
 		}
 	}
-	for i := range metadata.Instructions {
-		metadata.Instructions[i] = strings.TrimSpace(metadata.Instructions[i])
-		if metadata.Instructions[i] == "" {
-			return fmt.Errorf("instructions[%d] is empty", i)
+
+	filteredInstructions := make([]string, 0, len(metadata.Instructions))
+	for _, instr := range metadata.Instructions {
+		normalized := NormalizeString(instr)
+		if normalized != "" {
+			filteredInstructions = append(filteredInstructions, normalized)
 		}
 	}
+	metadata.Instructions = filteredInstructions
+
 	for i := range metadata.Images {
 		metadata.Images[i] = strings.TrimSpace(metadata.Images[i])
 		if metadata.Images[i] == "" {
-			return fmt.Errorf("images[%d] path is empty", i)
+			return metadata, fmt.Errorf("images[%d] path is empty", i)
 		}
 	}
-	return nil
+	return metadata, nil
 }
 
 type Exercise struct {
@@ -136,17 +140,19 @@ func NewExercise(
 func NewExerciseFromMetadata(path string) (Exercise, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return Exercise{}, err
+		return Exercise{}, fmt.Errorf("read file %s: %w", path, err)
 	}
 
 	var metadata jsonExercise
 	if err := json.Unmarshal(data, &metadata); err != nil {
-		return Exercise{}, err
+		return Exercise{}, fmt.Errorf("parse json %s: %w", path, err)
 	}
 
-	if err := validateMetadata(&metadata); err != nil {
-		return Exercise{}, err
+	validatedMetadata, err := validateMetadata(metadata)
+	if err != nil {
+		return Exercise{}, fmt.Errorf("validate metadata %s: %w", path, err)
 	}
+	metadata = validatedMetadata
 
 	baseDir := filepath.Dir(path)
 	images := make([]Image, 0, len(metadata.Images))
@@ -154,7 +160,7 @@ func NewExerciseFromMetadata(path string) (Exercise, error) {
 		absPath := filepath.Join(baseDir, imgPath)
 		imgData, err := os.ReadFile(absPath)
 		if err != nil {
-			return Exercise{}, err
+			return Exercise{}, fmt.Errorf("read image %s for %s: %w", absPath, path, err)
 		}
 		mimeType := http.DetectContentType(imgData)
 		images = append(images, Image{
