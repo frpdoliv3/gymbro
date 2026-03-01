@@ -7,4 +7,4 @@ require (
 	golang.org/x/text v0.34.0
 )
 
-require github.com/DATA-DOG/go-sqlmock v1.5.2 // indirect
+require github.com/DATA-DOG/go-sqlmock v1.5.2

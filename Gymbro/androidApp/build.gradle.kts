@@ -35,6 +35,7 @@ android {
 
 kotlin {
     dependencies {
+        implementation(projects.composeApp)
         implementation(libs.compose.uiToolingPreview)
         implementation(libs.androidx.activity.compose)
 
@@ -44,6 +45,9 @@ kotlin {
         implementation(libs.compose.ui)
         implementation(libs.compose.components.resources)
         implementation(libs.compose.uiToolingPreview)
+
+        implementation(libs.koin.android)
+        implementation(libs.koin.compose)
     }
 
     target {

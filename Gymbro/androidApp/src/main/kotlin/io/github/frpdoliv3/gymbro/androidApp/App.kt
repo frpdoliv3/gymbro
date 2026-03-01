@@ -1,7 +1,6 @@
 package io.github.frpdoliv3.gymbro.androidApp
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,12 +12,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
+import io.github.frpdoliv3.gymbro.composeApp.GreetingService
+import org.koin.compose.koinInject
 
 @Composable
 @Preview
 fun App() {
+    val greetingService = koinInject<GreetingService>()
+
     MaterialTheme {
         var showContent by remember { mutableStateOf(false) }
         Column(
@@ -32,7 +34,7 @@ fun App() {
                 Text("Click me!")
             }
             AnimatedVisibility(showContent) {
-                val greeting = remember { Greeting().greet() }
+                val greeting = greetingService.greet()
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally,
