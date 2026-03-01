@@ -34,7 +34,8 @@ CREATE TABLE muscles(
 CREATE TABLE steps(
     id INTEGER PRIMARY KEY,
     exercise_id INTEGER NOT NULL REFERENCES exercises(id),
-    description TEXT NOT NULL
+    description TEXT NOT NULL,
+    step_order INTEGER NOT NULL
 );
 
 CREATE TABLE exercise_images(

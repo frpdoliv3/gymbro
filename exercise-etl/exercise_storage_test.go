@@ -391,15 +391,15 @@ func TestStorage_StoreExercise(t *testing.T) {
 
 		// Instructions
 		mock.ExpectExec(regexp.QuoteMeta(`
-			INSERT INTO steps (exercise_id, description)
-			VALUES (?, ?)
-		`)).WithArgs(int64(1), "Step 1").
+			INSERT INTO steps (exercise_id, description, step_order)
+			VALUES (?, ?, ?)
+		`)).WithArgs(int64(1), "Step 1", 1).
 			WillReturnResult(sqlmock.NewResult(0, 1))
 
 		mock.ExpectExec(regexp.QuoteMeta(`
-			INSERT INTO steps (exercise_id, description)
-			VALUES (?, ?)
-		`)).WithArgs(int64(1), "Step 2").
+			INSERT INTO steps (exercise_id, description, step_order)
+			VALUES (?, ?, ?)
+		`)).WithArgs(int64(1), "Step 2", 2).
 			WillReturnResult(sqlmock.NewResult(0, 1))
 
 		// Commit transaction

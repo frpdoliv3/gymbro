@@ -239,9 +239,9 @@ func (s *Storage) storeExerciseTx(ctx context.Context, tx *sql.Tx, exercise Exer
 
 	for i, instruction := range exercise.Instructions {
 		_, err := tx.ExecContext(ctx, `
-			INSERT INTO steps (exercise_id, description)
-			VALUES (?, ?)
-		`, id, instruction)
+			INSERT INTO steps (exercise_id, description, step_order)
+			VALUES (?, ?, ?)
+		`, id, instruction, i+1)
 		if err != nil {
 			return 0, fmt.Errorf("insert instruction %d: %w", i, err)
 		}
