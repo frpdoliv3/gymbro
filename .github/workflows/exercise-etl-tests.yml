@@ -1,0 +1,38 @@
+name: Exercise ETL Go Tests
+
+on:
+  push:
+    branches:
+      - '**'
+    paths:
+      - 'exercise-etl/**'
+  pull_request:
+    branches:
+      - '**'
+    paths:
+      - 'exercise-etl/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./exercise-etl
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+          cache: true
+          cache-dependency-path: exercise-etl/go.sum
+
+      - name: Get dependencies
+        run: go mod download
+
+      - name: Run tests
+        run: go test ./...

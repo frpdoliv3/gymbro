@@ -1,0 +1,64 @@
+name: Validate Commits with Commitizen
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+    branches:
+      - "**"
+
+jobs:
+  validate-commits:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch all history for commit range
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install Commitizen
+        run: pip install commitizen==4.13.6
+
+      - name: Validate commit messages
+        run: |
+          # For pull requests, validate commits between base and head
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+            echo "Validating commits from $BASE_SHA to $HEAD_SHA"
+
+            # Check if there are any commits in the range
+            if git rev-list --count "$BASE_SHA..$HEAD_SHA" | grep -q '^0$'; then
+              echo "No new commits to validate (empty range). Skipping."
+              exit 0
+            fi
+
+            cz check --rev-range "$BASE_SHA..$HEAD_SHA"
+          else
+            # For push events, validate commits in the push
+            BEFORE="${{ github.event.before }}"
+            AFTER="${{ github.event.after }}"
+
+            if [[ "$BEFORE" != "0000000000000000000000000000000000000000" ]]; then
+              echo "Validating commits from $BEFORE to $AFTER"
+
+              # Check if there are any commits in the range
+              if git rev-list --count "$BEFORE..$AFTER" | grep -q '^0$'; then
+                echo "No commits to validate (empty range). Skipping."
+                exit 0
+              fi
+
+              cz check --rev-range "$BEFORE..$AFTER"
+            else
+              # Initial push (e.g., to a new branch) - check only the first commit
+              echo "Validating initial commit $AFTER"
+              cz check --rev-range "$AFTER"
+            fi
+          fi
