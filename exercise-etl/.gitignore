@@ -30,8 +30,6 @@ vendor/
 *.out
 go.work
 
-go.sum
-
 ### Linux ###
 # Linux operating system specific files
 
