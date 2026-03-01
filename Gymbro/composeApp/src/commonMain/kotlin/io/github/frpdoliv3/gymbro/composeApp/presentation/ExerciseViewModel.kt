@@ -27,5 +27,5 @@ class ExerciseViewModel(
             initialValue = emptyList()
         )
 
-    fun getExerciseById(id: Int) = exerciseRepository.getExerciseById(id)
+    suspend fun getExerciseById(id: Int): ExerciseEntity? = exerciseRepository.getExerciseById(id)
 }

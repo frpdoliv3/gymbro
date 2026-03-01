@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ExerciseImageDao {
-    @Query("SELECT * FROM exercise_images WHERE exercise_id = :exerciseId ORDER BY image_order ASC")
+    @Query("SELECT * FROM exercise_images WHERE exerciseId = :exerciseId ORDER BY imageOrder ASC")
     fun getImagesByExerciseId(exerciseId: Int): Flow<List<ExerciseImageEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

@@ -1,5 +1,6 @@
 package io.github.frpdoliv3.gymbro.composeApp.data.local.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 
@@ -20,6 +21,8 @@ import androidx.room.ForeignKey
     ]
 )
 data class ExerciseCategoryEntity(
-    val exercise_id: Int,
-    val category_id: Int
+    @ColumnInfo(name = "exercise_id")
+    val exerciseId: Int,
+    @ColumnInfo(name = "category_id")
+    val categoryId: Int
 )

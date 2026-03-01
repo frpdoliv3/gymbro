@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ExerciseMuscleDao {
-    @Query("SELECT * FROM exercise_muscles WHERE exercise_id = :exerciseId")
+    @Query("SELECT * FROM exercise_muscles WHERE exerciseId = :exerciseId")
     fun getMusclesByExerciseId(exerciseId: Int): Flow<List<ExerciseMuscleEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

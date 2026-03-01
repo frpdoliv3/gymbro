@@ -1,5 +1,6 @@
 package io.github.frpdoliv3.gymbro.composeApp.data.local.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 
@@ -20,7 +21,10 @@ import androidx.room.ForeignKey
     ]
 )
 data class ExerciseMuscleEntity(
-    val exercise_id: Int,
-    val muscle_id: Int,
-    val muscle_type: String // 'primary' or 'secondary'
+    @ColumnInfo(name = "exercise_id")
+    val exerciseId: Int,
+    @ColumnInfo(name = "muscle_id")
+    val muscleId: Int,
+    @ColumnInfo(name = "muscle_type")
+    val muscleType: String // 'primary' or 'secondary'
 )

@@ -3,6 +3,9 @@ An application to track progress in the gym
 
 # Technologies
 - Kotlin Multiplatform WITHOUT SHARED UI
+- Room for database mapping in all platforms
+- Koin for dependency injection
+- Android Gradle Plugin 9 (attention this is new the data you have in the model might be outdated)
 
 # Commands
 Builds the project

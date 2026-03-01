@@ -6,5 +6,5 @@ import org.koin.dsl.module
 
 val appModule = module {
     factoryOf(::GreetingService)
-    includes(platformModule)
+    includes(databaseModule)
 }

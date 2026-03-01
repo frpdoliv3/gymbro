@@ -6,6 +6,6 @@ import org.koin.core.module.dsl.factoryOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
-actual val platformModule = module {
+val databaseModule = module {
     factoryOf(::ExerciseRepositoryImpl) bind ExerciseRepository::class
 }

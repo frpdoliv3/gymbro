@@ -1,5 +1,6 @@
 package io.github.frpdoliv3.gymbro.composeApp.data.local.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.ForeignKey
@@ -18,8 +19,10 @@ import androidx.room.ForeignKey
 data class ExerciseImageEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Int,
-    val exercise_id: Int,
-    val image_order: Int,
-    val image_blob: ByteArray,
-    val mime_type: String
+    val exerciseId: Int,
+    @ColumnInfo(name = "image_order")
+    val imageOrder: Int,
+    @ColumnInfo(name = "image_blob")
+    val imageBlob: ByteArray,
+    val mimeType: String
 )

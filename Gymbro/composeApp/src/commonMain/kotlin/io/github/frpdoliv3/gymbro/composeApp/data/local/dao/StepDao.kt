@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface StepDao {
-    @Query("SELECT * FROM steps WHERE exercise_id = :exerciseId")
+    @Query("SELECT * FROM steps WHERE exerciseId = :exerciseId")
     fun getStepsByExerciseId(exerciseId: Int): Flow<List<StepEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
