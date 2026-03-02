@@ -18,7 +18,7 @@ A simple go application that parses exercises inside sources/free-exercise-db in
 # Project: Gymbro
 An application to track progress in the gym this application is stored in the folder Gymbro/
 
-## Feature Requirements
+Features are described inside Gymbro/spec/ in markdown files
 
 ## Technologies
 - Kotlin Multiplatform WITHOUT SHARED UI
