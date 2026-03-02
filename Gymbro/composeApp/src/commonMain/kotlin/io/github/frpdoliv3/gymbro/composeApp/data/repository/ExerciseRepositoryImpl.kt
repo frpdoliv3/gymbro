@@ -18,4 +18,8 @@ class ExerciseRepositoryImpl(
     override suspend fun getExerciseById(id: Int): ExerciseEntity? {
         return exerciseDao.getExerciseById(id)
     }
+
+    override suspend fun getExerciseBySourceId(sourceId: String): ExerciseEntity? {
+        return exerciseDao.getExerciseBySourceId(sourceId)
+    }
 }

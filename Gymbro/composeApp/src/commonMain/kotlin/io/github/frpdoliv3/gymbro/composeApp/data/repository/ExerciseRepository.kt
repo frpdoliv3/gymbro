@@ -7,4 +7,5 @@ interface ExerciseRepository {
     fun getAllExercises(): Flow<List<ExerciseEntity>>
     fun searchExercisesByName(name: String): Flow<List<ExerciseEntity>>
     suspend fun getExerciseById(id: Int): ExerciseEntity?
+    suspend fun getExerciseBySourceId(sourceId: String): ExerciseEntity?
 }
