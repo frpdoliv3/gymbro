@@ -38,3 +38,7 @@ Builds the project
 ## Important Notes
 - ALWAYS RUN THE CODE WITH THE COMMAND THAT BUILDS THE PROJECT THAT IS REFERENCED IN THIS FILE BEFORE FINISHING AND SAYING THAT YOU WERE SUCCESSFUL
 - NEVER INCLUDE UI CODE IN composeApp
+- The bundled `Gymbro/composeApp/src/commonMain/resources/databases/exercises.db` is a static, app-agnostic exercise source.
+- Store Gymbro application data in a separate app database, not in `exercises.db`.
+- If a feature needs new persistence, create or extend the app database instead of changing the bundled exercise source database.
+- Keep exercise access generic enough to support future plugin-based exercise providers.

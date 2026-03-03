@@ -44,6 +44,7 @@ kotlin {
         implementation(projects.composeApp)
         implementation(libs.compose.uiToolingPreview)
         implementation(libs.androidx.activity.compose)
+        implementation(libs.androidx.lifecycle.viewmodelCompose)
 
         implementation(libs.compose.runtime)
         implementation(libs.compose.foundation)

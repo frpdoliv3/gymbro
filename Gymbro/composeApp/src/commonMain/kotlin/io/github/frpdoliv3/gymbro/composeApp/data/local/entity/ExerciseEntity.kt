@@ -2,15 +2,9 @@ package io.github.frpdoliv3.gymbro.composeApp.data.local.entity
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
-import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(
-    tableName = "exercises",
-    indices = [
-        Index(value = ["source_id"], unique = true)
-    ]
-)
+@Entity(tableName = "exercises")
 data class ExerciseEntity(
     @PrimaryKey
     val id: Int,

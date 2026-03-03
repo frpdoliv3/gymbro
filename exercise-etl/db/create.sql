@@ -12,7 +12,7 @@ DROP TABLE IF EXISTS exercises;
 
 -- Create Tables
 CREATE TABLE exercises(
-    id INTEGER PRIMARY KEY,
+    id INTEGER NOT NULL PRIMARY KEY,
     source_id TEXT UNIQUE,
     name TEXT NOT NULL,
     force TEXT,
@@ -22,24 +22,24 @@ CREATE TABLE exercises(
 );
 
 CREATE TABLE categories(
-    id INTEGER PRIMARY KEY,
+    id INTEGER NOT NULL PRIMARY KEY,
     name TEXT NOT NULL UNIQUE
 );
 
 CREATE TABLE muscles(
-    id INTEGER PRIMARY KEY,
+    id INTEGER NOT NULL PRIMARY KEY,
     name TEXT NOT NULL UNIQUE
 );
 
 CREATE TABLE steps(
-    id INTEGER PRIMARY KEY,
+    id INTEGER NOT NULL PRIMARY KEY,
     exercise_id INTEGER NOT NULL REFERENCES exercises(id),
     description TEXT NOT NULL,
     step_order INTEGER NOT NULL
 );
 
 CREATE TABLE exercise_images(
-    id INTEGER PRIMARY KEY,
+    id INTEGER NOT NULL PRIMARY KEY,
     exercise_id INTEGER NOT NULL REFERENCES exercises(id),
     image_order INTEGER NOT NULL,
     image_blob BLOB NOT NULL,

@@ -3,14 +3,10 @@ package io.github.frpdoliv3.gymbro.composeApp.data.local.entity
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
-import androidx.room.Index
 
 @Entity(
     tableName = "exercise_categories",
     primaryKeys = ["exercise_id", "category_id"],
-    indices = [
-        Index(value = ["category_id"])
-    ],
     foreignKeys = [
         ForeignKey(
             entity = ExerciseEntity::class,
