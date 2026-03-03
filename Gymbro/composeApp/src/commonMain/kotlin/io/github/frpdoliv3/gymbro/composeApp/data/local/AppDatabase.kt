@@ -5,31 +5,24 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.RoomDatabaseConstructor
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
-import io.github.frpdoliv3.gymbro.composeApp.data.local.dao.*
-import io.github.frpdoliv3.gymbro.composeApp.data.local.entity.*
+import io.github.frpdoliv3.gymbro.composeApp.data.local.plan.dao.PlanDao
+import io.github.frpdoliv3.gymbro.composeApp.data.local.plan.dao.PlanExerciseDao
+import io.github.frpdoliv3.gymbro.composeApp.data.local.plan.entity.PlanEntity
+import io.github.frpdoliv3.gymbro.composeApp.data.local.plan.entity.PlanExerciseEntity
 import kotlinx.coroutines.Dispatchers
 
 @Database(
     entities = [
-        ExerciseEntity::class,
-        CategoryEntity::class,
-        MuscleEntity::class,
-        StepEntity::class,
-        ExerciseImageEntity::class,
-        ExerciseMuscleEntity::class,
-        ExerciseCategoryEntity::class
+        PlanEntity::class,
+        PlanExerciseEntity::class
     ],
-    version = 1
+    version = 1,
+    exportSchema = false
 )
 @ConstructedBy(AppDatabaseConstructor::class)
 abstract class AppDatabase : RoomDatabase() {
-    abstract fun exerciseDao(): ExerciseDao
-    abstract fun categoryDao(): CategoryDao
-    abstract fun muscleDao(): MuscleDao
-    abstract fun stepDao(): StepDao
-    abstract fun exerciseImageDao(): ExerciseImageDao
-    abstract fun exerciseMuscleDao(): ExerciseMuscleDao
-    abstract fun exerciseCategoryDao(): ExerciseCategoryDao
+    abstract fun planDao(): PlanDao
+    abstract fun planExerciseDao(): PlanExerciseDao
 }
 
 @Suppress("KotlinNoActualForExpect", "EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
@@ -37,9 +30,7 @@ expect object AppDatabaseConstructor : RoomDatabaseConstructor<AppDatabase> {
     override fun initialize(): AppDatabase
 }
 
-fun getRoomDatabase(
-    builder: RoomDatabase.Builder<AppDatabase>
-): AppDatabase {
+fun getAppRoomDatabase(builder: RoomDatabase.Builder<AppDatabase>): AppDatabase {
     return builder
         .setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.IO)

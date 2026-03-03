@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "b978da3ebe2925167c3d099c54b25a73",
+    "identityHash": "d98215a1abaff6cb5c3932e6b42d3db3",
     "entities": [
       {
         "tableName": "exercises",
@@ -137,6 +137,17 @@
             "id"
           ]
         },
+        "indices": [
+          {
+            "name": "index_steps_exercise_id",
+            "unique": false,
+            "columnNames": [
+              "exercise_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_steps_exercise_id` ON `${TABLE_NAME}` (`exercise_id`)"
+          }
+        ],
         "foreignKeys": [
           {
             "table": "exercises",
@@ -192,6 +203,17 @@
             "id"
           ]
         },
+        "indices": [
+          {
+            "name": "index_exercise_images_exercise_id",
+            "unique": false,
+            "columnNames": [
+              "exercise_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_exercise_images_exercise_id` ON `${TABLE_NAME}` (`exercise_id`)"
+          }
+        ],
         "foreignKeys": [
           {
             "table": "exercises",
@@ -237,6 +259,17 @@
             "muscle_type"
           ]
         },
+        "indices": [
+          {
+            "name": "index_exercise_muscles_muscle_id",
+            "unique": false,
+            "columnNames": [
+              "muscle_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_exercise_muscles_muscle_id` ON `${TABLE_NAME}` (`muscle_id`)"
+          }
+        ],
         "foreignKeys": [
           {
             "table": "exercises",
@@ -286,6 +319,17 @@
             "category_id"
           ]
         },
+        "indices": [
+          {
+            "name": "index_exercise_categories_category_id",
+            "unique": false,
+            "columnNames": [
+              "category_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_exercise_categories_category_id` ON `${TABLE_NAME}` (`category_id`)"
+          }
+        ],
         "foreignKeys": [
           {
             "table": "exercises",
@@ -314,7 +358,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'b978da3ebe2925167c3d099c54b25a73')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'd98215a1abaff6cb5c3932e6b42d3db3')"
     ]
   }
 }

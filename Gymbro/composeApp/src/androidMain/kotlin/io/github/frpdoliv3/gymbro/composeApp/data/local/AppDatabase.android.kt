@@ -9,38 +9,38 @@ private const val EXERCISE_DATABASE_NAME = "exercises.db"
 private const val DATABASE_RESOURCE_PATH = "databases/exercises.db"
 private const val PLAN_DATABASE_NAME = "gymbro.db"
 
-fun getExerciseDatabaseBuilder(context: Context): RoomDatabase.Builder<AppDatabase> {
+fun getExerciseDatabaseBuilder(context: Context): RoomDatabase.Builder<ExerciseDatabase> {
     val appContext = context.applicationContext
     val dbFile = appContext.getDatabasePath(EXERCISE_DATABASE_NAME)
-    return Room.databaseBuilder<AppDatabase>(
+    return Room.databaseBuilder<ExerciseDatabase>(
         context = appContext,
         name = dbFile.absolutePath
     )
         .fallbackToDestructiveMigration(dropAllTables = true)
         .createFromInputStream {
-            checkNotNull(AppDatabase::class.java.classLoader?.getResourceAsStream(DATABASE_RESOURCE_PATH)) {
+            checkNotNull(ExerciseDatabase::class.java.classLoader?.getResourceAsStream(DATABASE_RESOURCE_PATH)) {
                 "Missing bundled database resource: $DATABASE_RESOURCE_PATH"
             }
         }
 }
 
-fun getPlanDatabaseBuilder(context: Context): RoomDatabase.Builder<PlanDatabase> {
+fun getPlanDatabaseBuilder(context: Context): RoomDatabase.Builder<AppDatabase> {
     val appContext = context.applicationContext
     val dbFile = appContext.getDatabasePath(PLAN_DATABASE_NAME)
-    return Room.databaseBuilder<PlanDatabase>(
+    return Room.databaseBuilder<AppDatabase>(
         context = appContext,
         name = dbFile.absolutePath
     )
         .fallbackToDestructiveMigration(dropAllTables = true)
 }
 
-fun buildExerciseDatabase(context: Context): AppDatabase {
+fun buildExerciseDatabase(context: Context): ExerciseDatabase {
     return getExerciseDatabaseBuilder(context)
         .setQueryCoroutineContext(Dispatchers.IO)
         .build()
 }
 
-fun buildPlanDatabase(context: Context): PlanDatabase {
+fun buildPlanDatabase(context: Context): AppDatabase {
     return getPlanDatabaseBuilder(context)
         .setQueryCoroutineContext(Dispatchers.IO)
         .build()

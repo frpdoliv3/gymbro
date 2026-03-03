@@ -59,3 +59,8 @@ CREATE TABLE exercise_categories(
     category_id INTEGER NOT NULL REFERENCES categories(id),
     PRIMARY KEY(exercise_id, category_id)
 );
+
+CREATE INDEX idx_steps_exercise_id ON steps(exercise_id);
+CREATE INDEX idx_exercise_images_exercise_id ON exercise_images(exercise_id);
+CREATE INDEX idx_exercise_muscles_muscle_id ON exercise_muscles(muscle_id);
+CREATE INDEX idx_exercise_categories_category_id ON exercise_categories(category_id);
