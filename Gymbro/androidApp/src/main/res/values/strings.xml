@@ -1,3 +1,32 @@
 <resources>
     <string name="app_name">Gymbro</string>
+    <string name="workout_plan_title">Workout plan</string>
+    <string name="workout_plan_subtitle">Build a reusable exercise list from the bundled source database.</string>
+    <string name="search_exercises_label">Search exercises</string>
+    <string name="search_exercises_placeholder">Bench press, row, squat...</string>
+    <string name="plan_exercises_title">Plan exercises (%1$d)</string>
+    <string name="exercise_library_title">Exercise library (%1$d)</string>
+    <string name="plan_empty_title">Plan is empty</string>
+    <string name="plan_empty_body">Add exercises from the library below. The saved order becomes the execution order.</string>
+    <string name="no_exercises_found_title">No exercises found</string>
+    <string name="no_exercises_found_body">Try another search term.</string>
+    <string name="library_prefix">Library</string>
+    <string name="add_to_plan">Add to plan</string>
+    <string name="move_exercise_up">Move exercise up</string>
+    <string name="move_exercise_down">Move exercise down</string>
+    <string name="remove_exercise">Remove exercise</string>
+    <string name="duplicate">Duplicate</string>
+    <string name="force_label">Force</string>
+    <string name="level_label">Level</string>
+    <string name="mechanic_label">Mechanic</string>
+    <string name="equipment_label">Equipment</string>
+    <string name="not_specified">Not specified</string>
+    <string name="close">Close</string>
+    <string name="exercise_details">Exercise details</string>
+    <string name="no_extra_media_or_instructions">No extra media or instructions are available for this exercise.</string>
+    <string name="no_detailed_instructions">No detailed instructions are available.</string>
+    <string name="no_images_available_title">No images available</string>
+    <string name="no_images_available_body">This exercise only includes text instructions.</string>
+    <string name="unsupported_image_title">Unsupported image</string>
+    <string name="unsupported_image_body">The stored media could not be decoded on Android.</string>
 </resources>

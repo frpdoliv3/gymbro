@@ -39,9 +39,9 @@ android {
 
 kotlin {
     dependencies {
-        implementation(project(":composeApp"))
-
         implementation(projects.composeApp)
+        implementation(libs.androidx.lifecycle.viewmodelCompose)
+
         implementation(libs.compose.uiToolingPreview)
         implementation(libs.androidx.activity.compose)
         implementation(libs.androidx.lifecycle.viewmodelCompose)

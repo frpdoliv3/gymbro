@@ -45,3 +45,8 @@ fun getExerciseRoomDatabase(
         .setQueryCoroutineContext(Dispatchers.IO)
         .build()
 }
+
+interface DatabaseFactory {
+    fun createExerciseDatabase(): ExerciseDatabase
+    fun createAppDatabase(): AppDatabase
+}

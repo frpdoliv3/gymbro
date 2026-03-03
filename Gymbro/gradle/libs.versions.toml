@@ -42,4 +42,3 @@ androidMultiplatformLibrary = { id = "com.android.kotlin.multiplatform.library",
 kotlinKoin = { id = "io.insert-koin.compiler.plugin", version.ref = "koin-plugin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 androidx-room = { id = "androidx.room", version.ref = "room" }
-

@@ -7,8 +7,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -16,6 +18,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -28,8 +31,9 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -47,6 +51,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -62,16 +70,6 @@ import io.github.frpdoliv3.gymbro.composeApp.presentation.plan.PlanViewModel
 import kotlinx.coroutines.delay
 import org.koin.compose.koinInject
 
-private val GymbroColors = lightColorScheme(
-    primary = Color(0xFF2E5B4E),
-    onPrimary = Color(0xFFF7F5EF),
-    primaryContainer = Color(0xFFD7E8DC),
-    secondary = Color(0xFF8C4B2F),
-    secondaryContainer = Color(0xFFF6DED2),
-    surface = Color(0xFFFFFBF5),
-    surfaceVariant = Color(0xFFEFE6DA)
-)
-
 @Composable
 fun App() {
     val exerciseSourceRepository = koinInject<ExerciseSourceRepository>()
@@ -84,7 +82,7 @@ fun App() {
     }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
-    MaterialTheme(colorScheme = GymbroColors) {
+    MaterialTheme {
         Surface {
             Box(
                 modifier = Modifier
@@ -115,12 +113,12 @@ fun App() {
 
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text(
-                            text = "Workout plan",
+                            text = stringResource(R.string.workout_plan_title),
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "Build a reusable exercise list from the bundled source database.",
+                            text = stringResource(R.string.workout_plan_subtitle),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -130,13 +128,13 @@ fun App() {
                         value = state.query,
                         onValueChange = viewModel::onQueryChange,
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Search exercises") },
-                        placeholder = { Text("Bench press, row, squat...") },
+                        label = { Text(stringResource(R.string.search_exercises_label)) },
+                        placeholder = { Text(stringResource(R.string.search_exercises_placeholder)) },
                         singleLine = true
                     )
 
                     Text(
-                        text = "Plan exercises (${state.selectedExercises.size})",
+                        text = stringResource(R.string.plan_exercises_title, state.selectedExercises.size),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -148,8 +146,8 @@ fun App() {
                         if (state.selectedExercises.isEmpty()) {
                             item {
                                 EmptyStateCard(
-                                    title = "Plan is empty",
-                                    body = "Add exercises from the library below. The saved order becomes the execution order."
+                                    title = stringResource(R.string.plan_empty_title),
+                                    body = stringResource(R.string.plan_empty_body)
                                 )
                             }
                         }
@@ -172,7 +170,7 @@ fun App() {
                     HorizontalDivider()
 
                     Text(
-                        text = "Exercise library (${state.availableExercises.size})",
+                        text = stringResource(R.string.exercise_library_title, state.availableExercises.size),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -184,8 +182,8 @@ fun App() {
                         if (state.availableExercises.isEmpty()) {
                             item {
                                 EmptyStateCard(
-                                    title = "No exercises found",
-                                    body = "Try another search term."
+                                    title = stringResource(R.string.no_exercises_found_title),
+                                    body = stringResource(R.string.no_exercises_found_body)
                                 )
                             }
                         }
@@ -243,20 +241,15 @@ private fun PlannedExerciseCard(
         titlePrefix = "#${plannedExercise.position + 1}",
         exercise = plannedExercise.exercise,
         isDuplicate = isDuplicate,
-        onOpenDetails = onOpenDetails
-    ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedButton(onClick = onMoveUp) {
-                Text("Up")
-            }
-            OutlinedButton(onClick = onMoveDown) {
-                Text("Down")
-            }
-            Button(onClick = onRemove) {
-                Text("Remove")
-            }
+        onOpenDetails = onOpenDetails,
+        trailingActions = {
+            PlanExerciseActionRail(
+                onMoveUp = onMoveUp,
+                onMoveDown = onMoveDown,
+                onRemove = onRemove
+            )
         }
-    }
+    )
 }
 
 @Composable
@@ -266,15 +259,16 @@ private fun ExerciseCatalogCard(
     onAdd: () -> Unit
 ) {
     ExerciseInfoCard(
-        titlePrefix = "Library",
+        titlePrefix = stringResource(R.string.library_prefix),
         exercise = exercise,
         isDuplicate = false,
-        onOpenDetails = onOpenDetails
-    ) {
-        FilledTonalButton(onClick = onAdd) {
-            Text("Add to plan")
+        onOpenDetails = onOpenDetails,
+        bottomActions = {
+            FilledTonalButton(onClick = onAdd) {
+                Text(stringResource(R.string.add_to_plan))
+            }
         }
-    }
+    )
 }
 
 @Composable
@@ -283,7 +277,8 @@ private fun ExerciseInfoCard(
     exercise: ExerciseSummary,
     isDuplicate: Boolean,
     onOpenDetails: () -> Unit,
-    actions: @Composable () -> Unit
+    trailingActions: (@Composable () -> Unit)? = null,
+    bottomActions: (@Composable () -> Unit)? = null
 ) {
     Card(
         modifier = Modifier
@@ -320,12 +315,92 @@ private fun ExerciseInfoCard(
                 )
             }
 
-            MetadataRow(label = "Force", value = exercise.force)
-            MetadataRow(label = "Level", value = exercise.level)
-            MetadataRow(label = "Mechanic", value = exercise.mechanic)
-            MetadataRow(label = "Equipment", value = exercise.equipment)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(IntrinsicSize.Min),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.Top
+            ) {
+                MetadataGrid(
+                    modifier = Modifier.weight(1f),
+                    exercise = exercise
+                )
 
-            actions()
+                if (trailingActions != null) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .width(1.dp)
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                    )
+                    trailingActions()
+                }
+            }
+
+            bottomActions?.invoke()
+        }
+    }
+}
+
+@Composable
+private fun PlanExerciseActionRail(
+    onMoveUp: () -> Unit,
+    onMoveDown: () -> Unit,
+    onRemove: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .width(40.dp)
+            .padding(top = 2.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        CompactActionButton(
+            onClick = onMoveUp,
+            contentDescription = stringResource(R.string.move_exercise_up)
+        ) {
+            Icon(
+                painter = painterResource(android.R.drawable.arrow_up_float),
+                contentDescription = null
+            )
+        }
+        CompactActionButton(
+            onClick = onMoveDown,
+            contentDescription = stringResource(R.string.move_exercise_down)
+        ) {
+            Icon(
+                painter = painterResource(android.R.drawable.arrow_down_float),
+                contentDescription = null
+            )
+        }
+        CompactActionButton(
+            onClick = onRemove,
+            contentDescription = stringResource(R.string.remove_exercise)
+        ) {
+            Icon(
+                painter = painterResource(android.R.drawable.ic_menu_delete),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.error
+            )
+        }
+    }
+}
+
+@Composable
+private fun CompactActionButton(
+    onClick: () -> Unit,
+    contentDescription: String,
+    content: @Composable () -> Unit
+) {
+    IconButton(
+        onClick = onClick,
+        modifier = Modifier
+            .size(32.dp)
+            .semantics { this.contentDescription = contentDescription }
+    ) {
+        Box(modifier = Modifier.size(18.dp), contentAlignment = Alignment.Center) {
+            content()
         }
     }
 }
@@ -337,7 +412,7 @@ private fun DuplicatePill() {
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = "Duplicate",
+            text = stringResource(R.string.duplicate),
             modifier = Modifier
                 .background(
                     color = Color(0xFFFFE082),
@@ -352,19 +427,69 @@ private fun DuplicatePill() {
 }
 
 @Composable
-private fun MetadataRow(label: String, value: String?) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+private fun MetadataGrid(
+    modifier: Modifier = Modifier,
+    exercise: ExerciseSummary
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            MetadataCell(
+                modifier = Modifier.weight(1f),
+                label = stringResource(R.string.force_label),
+                value = exercise.force
+            )
+            MetadataCell(
+                modifier = Modifier.weight(1f),
+                label = stringResource(R.string.level_label),
+                value = exercise.level
+            )
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            MetadataCell(
+                modifier = Modifier.weight(1f),
+                label = stringResource(R.string.mechanic_label),
+                value = exercise.mechanic
+            )
+            MetadataCell(
+                modifier = Modifier.weight(1f),
+                label = stringResource(R.string.equipment_label),
+                value = exercise.equipment
+            )
+        }
+    }
+}
+
+@Composable
+private fun MetadataCell(
+    modifier: Modifier = Modifier,
+    label: String,
+    value: String?
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
         Text(
-            text = "$label:",
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.SemiBold
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.secondary,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
         Text(
-            text = value?.ifBlank { null } ?: "Not specified",
+            text = value?.ifBlank { null } ?: stringResource(R.string.not_specified),
             style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
@@ -381,12 +506,12 @@ private fun ExerciseDetailDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
             Button(onClick = onDismiss) {
-                Text("Close")
+                Text(stringResource(R.string.close))
             }
         },
         title = {
             Text(
-                text = detail?.summary?.name ?: "Exercise details",
+                text = detail?.summary?.name ?: stringResource(R.string.exercise_details),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold
             )
@@ -413,7 +538,7 @@ private fun ExerciseDetailDialog(
 
                     detail == null -> {
                         Text(
-                            text = "No extra media or instructions are available for this exercise.",
+                            text = stringResource(R.string.no_extra_media_or_instructions),
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
@@ -423,7 +548,7 @@ private fun ExerciseDetailDialog(
 
                         if (detail.instructions.isEmpty()) {
                             Text(
-                                text = "No detailed instructions are available.",
+                                text = stringResource(R.string.no_detailed_instructions),
                                 style = MaterialTheme.typography.bodyMedium
                             )
                         } else {
@@ -447,8 +572,8 @@ private fun ExerciseDetailDialog(
 private fun AnimatedExerciseImage(images: List<ExerciseImage>) {
     if (images.isEmpty()) {
         EmptyStateCard(
-            title = "No images available",
-            body = "This exercise only includes text instructions."
+            title = stringResource(R.string.no_images_available_title),
+            body = stringResource(R.string.no_images_available_body)
         )
         return
     }
@@ -475,8 +600,8 @@ private fun AnimatedExerciseImage(images: List<ExerciseImage>) {
 
     if (bitmap == null) {
         EmptyStateCard(
-            title = "Unsupported image",
-            body = "The stored media could not be decoded on Android."
+            title = stringResource(R.string.unsupported_image_title),
+            body = stringResource(R.string.unsupported_image_body)
         )
         return
     }
