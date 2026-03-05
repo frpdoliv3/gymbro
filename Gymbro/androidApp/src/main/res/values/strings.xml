@@ -15,6 +15,7 @@
     <string name="move_exercise_up">Move exercise up</string>
     <string name="move_exercise_down">Move exercise down</string>
     <string name="remove_exercise">Remove exercise</string>
+    <string name="view_exercise_info">View exercise information</string>
     <string name="duplicate">Duplicate</string>
     <string name="force_label">Force</string>
     <string name="level_label">Level</string>

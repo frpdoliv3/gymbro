@@ -4,17 +4,29 @@ import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
@@ -24,6 +36,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -42,7 +57,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,7 +69,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -68,6 +87,7 @@ import io.github.frpdoliv3.gymbro.composeApp.domain.model.ExerciseSummary
 import io.github.frpdoliv3.gymbro.composeApp.domain.model.PlannedExercise
 import io.github.frpdoliv3.gymbro.composeApp.presentation.plan.PlanViewModel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
 @Composable
@@ -143,8 +163,12 @@ fun App() {
                         modifier = Modifier.weight(1f),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        if (state.selectedExercises.isEmpty()) {
-                            item {
+                        item {
+                            AnimatedVisibility(
+                                visible = state.selectedExercises.isEmpty(),
+                                enter = expandVertically() + fadeIn(),
+                                exit = shrinkVertically() + fadeOut()
+                            ) {
                                 EmptyStateCard(
                                     title = stringResource(R.string.plan_empty_title),
                                     body = stringResource(R.string.plan_empty_body)
@@ -160,8 +184,6 @@ fun App() {
                                 plannedExercise = plannedExercise,
                                 isDuplicate = plannedExercise.exercise.ref in duplicateRefs,
                                 onOpenDetails = { viewModel.openDetail(plannedExercise.exercise.ref) },
-                                onMoveUp = { viewModel.moveExerciseUp(plannedExercise.id) },
-                                onMoveDown = { viewModel.moveExerciseDown(plannedExercise.id) },
                                 onRemove = { viewModel.removeExercise(plannedExercise.id) }
                             )
                         }
@@ -233,23 +255,212 @@ private fun PlannedExerciseCard(
     plannedExercise: PlannedExercise,
     isDuplicate: Boolean,
     onOpenDetails: () -> Unit,
-    onMoveUp: () -> Unit,
-    onMoveDown: () -> Unit,
     onRemove: () -> Unit
 ) {
-    ExerciseInfoCard(
-        titlePrefix = "#${plannedExercise.position + 1}",
-        exercise = plannedExercise.exercise,
-        isDuplicate = isDuplicate,
-        onOpenDetails = onOpenDetails,
-        trailingActions = {
-            PlanExerciseActionRail(
-                onMoveUp = onMoveUp,
-                onMoveDown = onMoveDown,
-                onRemove = onRemove
+    val cardExitDurationMillis = 280
+    val collapseDurationMillis = 220
+    val exitExtra = with(LocalDensity.current) { 72.dp.toPx() }
+    val scope = rememberCoroutineScope()
+    val density = LocalDensity.current
+    var isExpanded by rememberSaveable(plannedExercise.id) { mutableStateOf(false) }
+    var cardWidthPx by rememberSaveable(plannedExercise.id) { mutableIntStateOf(0) }
+    var cardHeightPx by rememberSaveable(plannedExercise.id) { mutableIntStateOf(0) }
+    var isCardExiting by rememberSaveable(plannedExercise.id) { mutableStateOf(false) }
+    var showCard by rememberSaveable(plannedExercise.id) { mutableStateOf(true) }
+    var isPlaceholderCollapsing by rememberSaveable(plannedExercise.id) { mutableStateOf(false) }
+    var removalToRight by rememberSaveable(plannedExercise.id) { mutableStateOf(false) }
+    val offsetX = remember(plannedExercise.id) { Animatable(0f) }
+    val showSwipeBackground = kotlin.math.abs(offsetX.value) > 0.5f || isCardExiting || isPlaceholderCollapsing
+    val canDrag = !isCardExiting && !isPlaceholderCollapsing && cardWidthPx > 0
+
+    val dragState = rememberDraggableState { delta ->
+        if (!canDrag) return@rememberDraggableState
+        val max = cardWidthPx.toFloat()
+        val next = (offsetX.value + delta).coerceIn(-max, max)
+        scope.launch { offsetX.snapTo(next) }
+    }
+
+    LaunchedEffect(isCardExiting) {
+        if (isCardExiting) {
+            val target = if (removalToRight) {
+                cardWidthPx.toFloat() + exitExtra
+            } else {
+                -cardWidthPx.toFloat() - exitExtra
+            }
+            offsetX.animateTo(
+                targetValue = target,
+                animationSpec = tween(
+                    durationMillis = cardExitDurationMillis,
+                    easing = LinearOutSlowInEasing
+                )
             )
+            showCard = false
+            isPlaceholderCollapsing = true
         }
-    )
+    }
+
+    LaunchedEffect(isPlaceholderCollapsing) {
+        if (isPlaceholderCollapsing) {
+            delay(collapseDurationMillis.toLong())
+            onRemove()
+        }
+    }
+
+    AnimatedVisibility(
+        visible = !isPlaceholderCollapsing,
+        exit = shrinkVertically(
+            animationSpec = tween(durationMillis = collapseDurationMillis),
+            shrinkTowards = Alignment.Top
+        )
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .then(
+                    if (cardHeightPx > 0) {
+                        Modifier.height(with(density) { cardHeightPx.toDp() })
+                    } else {
+                        Modifier
+                    }
+                )
+        ) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(
+                        if (showSwipeBackground) {
+                            MaterialTheme.colorScheme.errorContainer
+                        } else {
+                            Color.Transparent
+                        }
+                    )
+                    .padding(horizontal = 16.dp),
+                contentAlignment = if (offsetX.value >= 0f || removalToRight) {
+                    Alignment.CenterStart
+                } else {
+                    Alignment.CenterEnd
+                }
+            ) {
+                if (showSwipeBackground) {
+                    Icon(
+                        imageVector = Icons.Outlined.Delete,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                }
+            }
+
+            if (showCard) {
+                Box(
+                    modifier = Modifier
+                        .onSizeChanged { cardWidthPx = it.width }
+                        .onSizeChanged { cardHeightPx = it.height }
+                        .offset { androidx.compose.ui.unit.IntOffset(offsetX.value.toInt(), 0) }
+                        .draggable(
+                            state = dragState,
+                            orientation = Orientation.Horizontal,
+                            enabled = canDrag,
+                            onDragStopped = {
+                                if (!canDrag) return@draggable
+                                val commit = kotlin.math.abs(offsetX.value) >= cardWidthPx * 0.5f
+                                if (commit) {
+                                    removalToRight = offsetX.value > 0f
+                                    isCardExiting = true
+                                } else {
+                                    scope.launch {
+                                        offsetX.animateTo(
+                                            targetValue = 0f,
+                                            animationSpec = tween(durationMillis = 180)
+                                        )
+                                    }
+                                }
+                            }
+                        )
+                ) {
+                    PlannedExerciseCardContent(
+                        plannedExercise = plannedExercise,
+                        isDuplicate = isDuplicate,
+                        isExpanded = isExpanded,
+                        onToggleExpanded = { isExpanded = !isExpanded },
+                        onOpenDetails = onOpenDetails
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PlannedExerciseCardContent(
+    plannedExercise: PlannedExercise,
+    isDuplicate: Boolean,
+    isExpanded: Boolean,
+    onToggleExpanded: () -> Unit,
+    onOpenDetails: () -> Unit
+) {
+    Card(
+        onClick = onToggleExpanded,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .animateContentSize(animationSpec = spring()),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "#${plannedExercise.position + 1}",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.secondary,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = plannedExercise.exercise.name,
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                if (isDuplicate) {
+                    DuplicatePill()
+                }
+                Box(modifier = Modifier.padding(top = 4.dp, end = 6.dp)) {
+                    CompactActionButton(
+                        onClick = onOpenDetails,
+                        contentDescription = stringResource(R.string.view_exercise_info)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Info,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.secondary
+                        )
+                    }
+                }
+            }
+
+            AnimatedVisibility(
+                visible = isExpanded,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
+                MetadataGrid(
+                    modifier = Modifier.fillMaxWidth(),
+                    exercise = plannedExercise.exercise
+                )
+            }
+        }
+    }
 }
 
 @Composable
@@ -277,7 +488,7 @@ private fun ExerciseInfoCard(
     exercise: ExerciseSummary,
     isDuplicate: Boolean,
     onOpenDetails: () -> Unit,
-    trailingActions: (@Composable () -> Unit)? = null,
+    headerActions: (@Composable () -> Unit)? = null,
     bottomActions: (@Composable () -> Unit)? = null
 ) {
     Card(
@@ -307,6 +518,7 @@ private fun ExerciseInfoCard(
                         DuplicatePill()
                     }
                     Spacer(modifier = Modifier.weight(1f))
+                    headerActions?.invoke()
                 }
                 Text(
                     text = exercise.name,
@@ -315,74 +527,12 @@ private fun ExerciseInfoCard(
                 )
             }
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(IntrinsicSize.Min),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalAlignment = Alignment.Top
-            ) {
-                MetadataGrid(
-                    modifier = Modifier.weight(1f),
-                    exercise = exercise
-                )
-
-                if (trailingActions != null) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxHeight()
-                            .width(1.dp)
-                            .background(MaterialTheme.colorScheme.surfaceVariant)
-                    )
-                    trailingActions()
-                }
-            }
+            MetadataGrid(
+                modifier = Modifier.fillMaxWidth(),
+                exercise = exercise
+            )
 
             bottomActions?.invoke()
-        }
-    }
-}
-
-@Composable
-private fun PlanExerciseActionRail(
-    onMoveUp: () -> Unit,
-    onMoveDown: () -> Unit,
-    onRemove: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .width(40.dp)
-            .padding(top = 2.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        CompactActionButton(
-            onClick = onMoveUp,
-            contentDescription = stringResource(R.string.move_exercise_up)
-        ) {
-            Icon(
-                painter = painterResource(android.R.drawable.arrow_up_float),
-                contentDescription = null
-            )
-        }
-        CompactActionButton(
-            onClick = onMoveDown,
-            contentDescription = stringResource(R.string.move_exercise_down)
-        ) {
-            Icon(
-                painter = painterResource(android.R.drawable.arrow_down_float),
-                contentDescription = null
-            )
-        }
-        CompactActionButton(
-            onClick = onRemove,
-            contentDescription = stringResource(R.string.remove_exercise)
-        ) {
-            Icon(
-                painter = painterResource(android.R.drawable.ic_menu_delete),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.error
-            )
         }
     }
 }
@@ -399,7 +549,7 @@ private fun CompactActionButton(
             .size(32.dp)
             .semantics { this.contentDescription = contentDescription }
     ) {
-        Box(modifier = Modifier.size(18.dp), contentAlignment = Alignment.Center) {
+        Box(modifier = Modifier.size(24.dp), contentAlignment = Alignment.Center) {
             content()
         }
     }
@@ -437,7 +587,7 @@ private fun MetadataGrid(
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             MetadataCell(
                 modifier = Modifier.weight(1f),
@@ -452,7 +602,7 @@ private fun MetadataGrid(
         }
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             MetadataCell(
                 modifier = Modifier.weight(1f),
