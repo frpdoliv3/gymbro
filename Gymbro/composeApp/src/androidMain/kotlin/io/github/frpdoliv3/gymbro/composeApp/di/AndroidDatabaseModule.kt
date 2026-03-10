@@ -1,9 +1,9 @@
 package io.github.frpdoliv3.gymbro.composeApp.di
 
-import io.github.frpdoliv3.gymbro.composeApp.data.local.AppDatabase
-import io.github.frpdoliv3.gymbro.composeApp.data.local.AndroidDatabaseFactory
-import io.github.frpdoliv3.gymbro.composeApp.data.local.DatabaseFactory
-import io.github.frpdoliv3.gymbro.composeApp.data.local.ExerciseDatabase
+import io.github.frpdoliv3.gymbro.composeApp.infrastructure.local.AppDatabase
+import io.github.frpdoliv3.gymbro.composeApp.infrastructure.local.AndroidDatabaseFactory
+import io.github.frpdoliv3.gymbro.composeApp.infrastructure.local.DatabaseFactory
+import io.github.frpdoliv3.gymbro.composeApp.infrastructure.local.ExerciseDatabase
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
